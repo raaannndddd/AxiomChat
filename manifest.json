@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "axiom chat",
+    "description": "axiom live and ai chatbot",
+    "version": "1.0",
+    "action": {
+      "default_popup": "public/livechat/livechat.html"
+    },
+    "icons": {
+      "16": "public/img/icon.png",
+      "32": "public/img/icon.png",
+      "48": "public/img/icon.png",
+      "128": "public/img/icon.png"
+    },
+    "background": {
+      "service_worker": "background.js",
+      "type": "module"
+    },
+    "permissions": ["storage", "scripting", "tabs", "activeTab"],
+    "host_permissions": ["*://*.axiom.trade/*", "*://axiom.trade/*", "http://localhost:3000/", "https://accounts.google.com/",
+    "https://*.googleusercontent.com/"],
+    "content_scripts": [
+      {
+        "matches": ["*://*.axiom.trade/*", "*://axiom.trade/*"],
+        "js": ["content.js"],
+        "run_at": "document_idle"
+      }
+    ],
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self';"
+    }
+  }  

@@ -1,0 +1,78 @@
+body {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background-color: #0d1117;
+  color: #c9d1d9;
+  margin: 0;
+  padding: 10px;
+}
+
+.container {
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.msger-chat {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 300px;
+  padding: 10px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background-color: #161b22;
+  scroll-behavior: smooth;
+  margin-bottom: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.msger-chat::-webkit-scrollbar {
+  display: none;
+}
+
+.msg {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #ffffff;
+}
+
+.msg .user {
+  font-weight: 600;
+  color: #58a6ff;
+  margin-right: 4px;
+}
+
+.msger-inputarea {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.msger-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background-color: #0d1117;
+  color: #c9d1d9;
+  font-size: 14px;
+}
+
+.msger-send-btn {
+  padding: 8px 14px;
+  background-color: #238636;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.msger-send-btn:hover {
+  background-color: #2ea043;
+}

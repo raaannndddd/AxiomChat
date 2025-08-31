@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chatbot</title>
+  <link rel="stylesheet" href="../styles/styles.css" />
+  <link rel="stylesheet" href="../styles/bulma.min.css" />
+  <script src="../purify.min.js"></script>
+  <script src="../axios.min.js"></script>
+</head>
+<body>
+  <div class="container p-3">
+    <h1 class="has-text-centered has-text-weight-bold has-text-white" style="padding:4px 0;margin:0;">ChartChat</h1>
+
+    <div class="fixed-grid has-2-cols mb-3">
+      <div class="grid">
+        <div class="cell button is-dark">
+          <a href="../login/account.html">Account</a>
+        </div>
+        <div class="cell button is-dark">AI Chat</div>
+        <div class="cell button is-dark">
+          <a href="../livechat/livechat.html">Live Chat</a>
+        </div>
+        <div id="coin-info"></div>
+        <button id="monitor-btn">Monitor for CTO</button>
+      </div>
+    </div>
+
+      <main class="msger-chat" id="chat">
+          <div id="chatLog"></div>
+      </main>
+
+    <form id="chatForm" class="msger-inputarea">
+      <input id="userInput" class="input msger-input" type="text" placeholder="Ask me anything">
+      <button type="submit" class="button is-dark">Send</button>
+    </form>
+  </div>
+  
+  <script type="module" src="chatbot.js" defer></script>
+</body>
+</html>
