@@ -73,12 +73,22 @@ and answers trader questions directly in the chat.
 
 ## Setup (High Level)
 
-1. **Install & run Ollama** locally; pull a model (e.g., `llama3.1`).  
-2. **Configure environment** for:
-   - `OLLAMA_HOST`, `OLLAMA_MODEL`
-   - Optional Google OAuth client for sign-in
-3. **Start backend** (chat + AI proxy) and **load the extension** in Chrome.
+Pull and start Llama2 Model:
+```
+ollama pull llama2
+ollama serve
+```
 
-> Keep your `.env` out of version control.
+Install dependencies:
+```
+npm install
+```
+
+Add a .env file in root directory containing google client ID (do not change anything):
+```
+GOOGLE_CLIENT_ID=336952229035-95pcrf54sn563jbhpqjq3as1c04l1ekm.apps.googleusercontent.com
+```
+
+Go to google chrome extensions, turn on developer mode, press on load unpacked, and choose this project
 
 ---
