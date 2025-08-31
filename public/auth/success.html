@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head><title>Login Successful</title></head>
+  <body>
+    <script>
+      // Send a message to the extension
+      chrome.runtime.sendMessage({ type: "LOGIN_SUCCESS" });
+
+      // Optional: wait a second and close the tab
+      setTimeout(() => window.close(), 1000);
+    </script>
+    <p>Login successful! You may close this tab.</p>
+  </body>
+</html>

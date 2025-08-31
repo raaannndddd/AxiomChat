@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Axiom Chat</title>
+    <link rel="stylesheet" href="../styles/styles.css" />
+    <link rel="stylesheet" href="../styles/bulma.min.css" />
+    <script src="/redirect.js" defer></script>
+    <script src="../purify.min.js"></script>
+    <script src="../socket.io.min.js"></script>
+    <script src="livechat.js" defer></script>
+</head>
+<body>
+    <div class="container p-3">
+        <h1 class="has-text-centered">Chatter</h1>
+
+        <div class="fixed-grid has-2-cols mb-3">
+            <div class="grid">
+                <div class="cell button is-dark">
+                    <button id="account-btn">Account</button>
+                </div>
+                <div class="cell button is-dark">
+                    <a href="../chatbot/chatbot.html">AI Chat</a>
+                </div>
+                <div class="cell button is-dark">Live Chat</div>
+            </div>
+        </div>
+
+        <!-- <div id="coin-info" style="padding: 10px; font-size: 14px; border-bottom: 1px solid #ccc;">
+            <strong>Loading coin info...</strong>
+        </div> -->
+
+        <main class="msger-chat" id="chat"></main>
+
+        <form class="msger-inputarea">
+            <input
+                class="input msger-input"
+                type="text"
+                placeholder="Start chatting"
+                id="inputMessage"
+            />
+            <button type="submit" class="button is-dark">Send</button>
+        </form>
+    </div>
+</body>
+</html>
