@@ -89,6 +89,11 @@ Add a .env file in root directory containing google client ID (do not change any
 GOOGLE_CLIENT_ID=336952229035-95pcrf54sn563jbhpqjq3as1c04l1ekm.apps.googleusercontent.com
 ```
 
+Activate backend:
+```
+cd server
+node server/server.js
+```
 Go to google chrome extensions, turn on developer mode, press on load unpacked, and choose this project
 
 ---

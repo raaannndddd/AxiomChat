@@ -25,6 +25,7 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 const httpServer = createServer(app);
+let io;
 
 // --- MongoDB Connection ---
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/chatapp')
@@ -49,14 +50,23 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- Socket.IO Setup with Passport Sessions ---
-const io = new Server(httpServer, { cors: { origin: '*', methods: ['GET', 'POST'] } });
-io.use(passportSocketIo.authorize({
-  key: 'connect.sid',
-  secret: 'your-secret-key',
-  store: sessionStore,
-  passport: passport,
-  cookieParser
-}));
+// const io = new Server(httpServer, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+// io.use(passportSocketIo.authorize({
+//   key: 'connect.sid',
+//   secret: 'your-secret-key',
+//   store: sessionStore,
+//   passport: passport,
+//   cookieParser
+// }));
+
+
+// const io = new Server(httpServer, {
+//   cors: {
+//     origin: ['http://localhost:3000', 'chrome-extension://mpdgkffpebjhkdeccodjpkkhlhfcihaj', '*'],
+//     methods: ['GET', 'POST'],
+//     credentials: false, // we are NOT relying on cookies for sockets
+//   },
+// });
 
 // --- Helpers ---
 import { Filter } from 'bad-words';
@@ -112,63 +122,6 @@ app.get('/api/coin-info/:coinId', async (req, res) => {
   }
 });
 
-// --- Socket.IO ---
-io.on('connection', socket => {
-  if (socket.request.user?._id) {
-    socket.join(socket.request.user._id.toString());
-  }
-
-  let currentRoom = null;
-  console.log('🟢 New client connected:', socket.id);
-
-  socket.on('join-room', async (room) => {
-    currentRoom = room;
-    socket.join(room);
-    console.log(`🔗 ${socket.id} joined room ${room}`);
-    try {
-      const history = await Message.find({ room }).sort({ createdAt: 1 }).limit(50);
-      socket.emit('chat-history', history.map(m => ({ user: m.username, message: m.message })));
-    } catch (err) {
-      console.error('❌ Failed to fetch chat history:', err);
-    }
-  });
-
-  socket.on('new-user', (anonName, callback) => {
-    if (!anonName) {
-      anonName = `anon${String(anonCounter).padStart(5, '0')}`;
-      anonCounter++;
-    }
-    users[socket.id] = anonName;
-    if (currentRoom) socket.to(currentRoom).emit('user-connected', anonName);
-    if (callback) callback(anonName);
-  });
-
-  socket.on('send-chat-message', async message => {
-    const now = Date.now();
-    const timestamps = userMessageTimestamps[socket.id] || [];
-    const recent = timestamps.filter(t => now - t < rateLimitWindow);
-    if (recent.length >= maxMessages) return socket.emit('rate-limit-warning', '⏱️ Too many messages. Try again shortly.');
-    if (filter.isProfane(message)) return socket.emit('message-blocked', '⚠️ Message blocked.');
-  
-    const user = users[socket.id] || (socket.request.user?.anonName || 'Unknown');
-    const payload = { message, user };
-    userMessageTimestamps[socket.id] = [...recent, now];
-  
-    try {
-      await Message.create({ username: user, room: currentRoom, message, createdAt: new Date() });
-    } catch (err) { console.error('❌ Failed to save message:', err); }
-  
-    io.to(currentRoom).emit('chat-message', payload);
-  });
-
-  socket.on('disconnect', () => {
-    const user = users[socket.id];
-    if (currentRoom) socket.to(currentRoom).emit('user-disconnected', user);
-    delete users[socket.id];
-    delete userMessageTimestamps[socket.id];
-  });
-});
-
 // --- Hugging Face Sentiment Model ---
 (async () => { sentimentAnalyzer = await pipeline("sentiment-analysis"); })();
 
@@ -180,6 +133,130 @@ function isGoodForCTO(data) {
   if (data.rugRisk === "LOW") score += 3;
   if (data.sentiment === "Bullish") score += 2;
   return score >= 6;
+}
+
+// === Socket.IO (single instance, stateless handshake) ===
+function initSocket(server) {
+  if (io) {
+    try { io.removeAllListeners(); io.close(); } catch {}
+  }
+
+  io = new Server(server, {
+    cors: {
+      origin: [
+        'http://localhost:3000',
+        'chrome-extension://mpdgkffpebjhkdeccodjpkkhlhfcihaj',
+        '*', // tighten in prod
+      ],
+      methods: ['GET', 'POST'],
+      credentials: false, // not using cookies for sockets
+    },
+    // path: '/socket.io', // default
+  });
+
+  // 🚫 DO NOT re-add passport.socketio here
+  // io.use(passportSocketIo.authorize(...)) // <-- leave removed
+
+  // Accept room + anonName via handshake
+  io.use((socket, next) => {
+    const { room, anonName } = socket.handshake.auth || {};
+    socket.data.room = normalizeRoom(room || 'general');
+    socket.data.anonName = (anonName && String(anonName).trim()) || 'Anon';
+    next();
+  });
+
+  const rateLimitWindow = 30000;
+  const maxMessages = 5;
+  const userMessageTimestamps = {};
+
+  io.on('connection', async (socket) => {
+    let currentRoom = socket.data.room;
+    let currentUser = socket.data.anonName;
+
+    socket.join(currentRoom);
+    console.log(`🟢 ${socket.id} connected → room=${currentRoom} user=${currentUser}`);
+    socket.emit('connected', { room: currentRoom, anonName: currentUser });
+
+    // send last 50 messages
+    try {
+      const historyDocs = await Message.find({ room: currentRoom })
+        .sort({ createdAt: 1 })
+        .limit(50);
+      socket.emit('chat-history', historyDocs.map(m => ({
+        user: m.username, message: m.message
+      })));
+    } catch (err) {
+      console.error('❌ Failed to fetch chat history:', err);
+    }
+
+    // incoming message
+    socket.on('send-chat-message', async (message) => {
+      // rate limit
+      const now = Date.now();
+      const ts = userMessageTimestamps[socket.id] || [];
+      const recent = ts.filter(t => now - t < rateLimitWindow);
+      if (recent.length >= maxMessages) {
+        socket.emit('rate-limit-warning', '⏱️ Too many messages. Try again shortly.');
+        return;
+      }
+
+      // profanity
+      if (filter.isProfane(message)) {
+        socket.emit('message-blocked', '⚠️ Message blocked.');
+        return;
+      }
+
+      userMessageTimestamps[socket.id] = [...recent, now];
+
+      const payload = { user: currentUser, message };
+
+      try {
+        await Message.create({
+          username: currentUser, room: currentRoom, message, createdAt: new Date()
+        });
+      } catch (err) {
+        console.error('❌ Failed to save message:', err);
+      }
+
+      socket.to(currentRoom).emit('chat-message', payload);
+    });
+
+    // legacy support
+    socket.on('join-room', async (room) => {
+      const nextRoom = normalizeRoom(room || 'general');
+      if (nextRoom === currentRoom) return;
+
+      socket.leave(currentRoom);
+      currentRoom = nextRoom;
+      socket.join(currentRoom);
+      console.log(`🔗 ${socket.id} switched room → ${currentRoom}`);
+
+      try {
+        const historyDocs = await Message.find({ room: currentRoom })
+          .sort({ createdAt: 1 })
+          .limit(50);
+        socket.emit('chat-history', historyDocs.map(m => ({
+          user: m.username, message: m.message
+        })));
+      } catch (err) {
+        console.error('❌ Failed to fetch chat history on join:', err);
+      }
+    });
+
+    socket.on('new-user', (name, cb) => {
+      if (name && String(name).trim()) currentUser = String(name).trim();
+      if (cb) cb(currentUser);
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`🔴 ${socket.id} disconnected from room=${currentRoom}`);
+      delete userMessageTimestamps[socket.id];
+    });
+  });
+}
+
+function normalizeRoom(room) {
+  return String(room).trim().toLowerCase();
 }
 
 cron.schedule('*/5 * * * *', async () => {
@@ -239,6 +316,7 @@ app.get('/api/admin/monitored', async (req, res) => {
   res.json(coins);
 });
 
+initSocket(httpServer);
 // --- Start Servers ---
 httpServer.listen(3000, () => console.log('🚀 Server + Socket.IO running on http://localhost:3000'));
 app.listen(3001, () => console.log("Sentiment API on port 3001"));
