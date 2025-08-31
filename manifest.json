@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "axiom chat",
-    "description": "axiom live and ai chatbot",
+    "name": "ChartChat",
+    "description": "A Chrome extension for crypto traders to chat while watching crypto charts, learn about meme coins, and get quick AI-assisted insights without leaving the page.",
     "version": "1.0",
     "action": {
       "default_popup": "public/livechat/livechat.html"
