@@ -50,6 +50,7 @@ Track specification: FinTech
 - **Auth:** Google Sign-In
 - **Market Data:** Dexscreener & CoinGecko APIs
 
+
 ---
 
 ## Example AI Prompting
