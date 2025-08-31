@@ -61,6 +61,7 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcrypt';
 import { User } from '../models/Users.js';
+import 'dotenv/config';
 
 // Local login
 passport.use(new LocalStrategy({

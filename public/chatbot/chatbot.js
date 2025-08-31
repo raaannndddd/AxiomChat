@@ -14,9 +14,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   });
 });
 
-// Utility functions: load/save history, appendMessage, etc.
-// (Omitted for brevity, same as before)
-
 document.addEventListener('DOMContentLoaded', async () => {
   aiChatMessages = await new Promise(resolve => 
     chrome.storage.local.get([CHAT_STORAGE_KEY], result => resolve(result[CHAT_STORAGE_KEY] || []))
@@ -58,7 +55,6 @@ form.addEventListener('submit', async (e) => {
     addAndSaveMessage("Bot", "Something went wrong.");
   }
 });
-
 
 function addAndSaveMessage(user, text) {
   aiChatMessages.push({ user, text });
