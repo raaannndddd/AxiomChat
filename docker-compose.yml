@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: chat-extension-app
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SESSION_SECRET: "${SESSION_SECRET}"
+      MONGODB_URI: "mongodb://mongo:27017/chatdb"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
+      GOOGLE_CALLBACK_URL: "http://localhost:3000/auth/google/callback"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    container_name: chat-extension-mongo
+    ports:
+      - "27017:27017"        # optional, handy for Compass
+    volumes:
+      - chatext-data:/data/db
+
+volumes:
+  chatext-data:
